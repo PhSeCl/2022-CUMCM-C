@@ -59,16 +59,12 @@ def test_pairwise_associations_cover_six_pairs_and_flag_sparse_tables() -> None:
         "low_expected_ratio",
         "chi_square_reliable",
     }
-    color_rows = result[
-        (result["variable_1"] == "颜色") | (result["variable_2"] == "颜色")
-    ]
+    color_rows = result[(result["variable_1"] == "颜色") | (result["variable_2"] == "颜色")]
     assert not color_rows["chi_square_reliable"].any()
 
 
 def test_association_matrix_is_symmetric_with_expected_diagonal() -> None:
-    frame = pd.DataFrame(
-        {"a": ["x", "x", "y", "y"], "b": ["u", "u", "v", "v"], "c": ["m"] * 4}
-    )
+    frame = pd.DataFrame({"a": ["x", "x", "y", "y"], "b": ["u", "u", "v", "v"], "c": ["m"] * 4})
     columns = ["a", "b", "c"]
     results = pairwise_categorical_associations(frame, columns)
 

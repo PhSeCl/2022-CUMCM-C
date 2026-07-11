@@ -127,8 +127,8 @@ def association_matrix(
     for column in columns:
         matrix.loc[column, column] = diagonal
     for row in results.itertuples(index=False):
-        variable_1 = getattr(row, "variable_1")
-        variable_2 = getattr(row, "variable_2")
+        variable_1 = row.variable_1
+        variable_2 = row.variable_2
         value = getattr(row, value_column)
         matrix.loc[variable_1, variable_2] = value
         matrix.loc[variable_2, variable_1] = value

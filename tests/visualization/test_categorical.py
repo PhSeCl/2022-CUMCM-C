@@ -1,6 +1,7 @@
+import warnings
+
 import matplotlib
 import pandas as pd
-import warnings
 
 matplotlib.use("Agg")
 
@@ -29,9 +30,7 @@ def test_categorical_plots_return_expected_axes_without_mutating_data() -> None:
         warnings.simplefilter("always")
         count_figure, count_axes = plot_category_counts(frame, columns)
         heat_figure, heat_axes = plot_association_heatmaps(identity, identity, reliable)
-        weather_figure, weather_axes = plot_weathering_proportions(
-            frame, ["纹饰", "类型", "颜色"]
-        )
+        weather_figure, weather_axes = plot_weathering_proportions(frame, ["纹饰", "类型", "颜色"])
         for figure in (count_figure, heat_figure, weather_figure):
             figure.canvas.draw()
 
