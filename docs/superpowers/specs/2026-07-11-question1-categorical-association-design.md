@@ -47,11 +47,22 @@
 - `pairwise_categorical_associations(frame, columns)`：返回六组检验的整洁 DataFrame；
 - `association_matrix(results, columns, value_column)`：将整洁结果转换为对称矩阵。
 
-模块只负责统计计算，不调用绘图库。Notebook 负责图形布局与中文标签，避免统计逻辑只能在单元格中复现。
+分析模块只负责统计计算，不调用绘图库。图形布局与中文标签由独立可视化模块负责，避免统计或绘图逻辑只能在单元格中复现。
+
+新增 `src/cumcm2022c/visualization/categorical.py`，集中提供：
+
+- `configure_chinese_fonts()`：设置中文字体回退并返回实际可用字体信息；
+- `plot_category_counts(frame, columns)`：绘制四个变量的类别频数分面图；
+- `plot_association_heatmaps(v_matrix, p_matrix, reliability_matrix)`：绘制关联强度与显著性热力图，并标记不可靠卡方结果；
+- `plot_weathering_proportions(frame, predictors, target="表面风化")`：绘制三个预测变量对应的 100% 风化比例图。
+
+可视化函数返回 Matplotlib `Figure` 和 `Axes`，不在函数内部调用 `show()`，也不自行保存文件。这样既可在 Notebook 中直接显示，也可在后续报告脚本中复用和测试。
 
 ## Notebook 输出
 
-在 `notebooks/00_data_inspection.ipynb` 现有数据检查之后增加“问题一：分类变量与表面风化”章节，按顺序输出：
+新增专用的 `notebooks/10_question1_weathering.ipynb`，不修改已运行的通用数据勘察 Notebook。专用 Notebook 只保留标题说明、导入与数据加载、统计计算、结果表、热力图和风化比例图等少量编排单元格，不定义统计或绘图函数。
+
+Notebook 按顺序输出：
 
 1. 四个变量的类别频数表与分面计数柱状图；
 2. 六组统计结果表，包括 `variable_1`、`variable_2`、`n`、`chi2`、`dof`、`p_value`、`cramers_v`、`min_expected`、`low_expected_ratio`、`chi_square_reliable`；
@@ -78,12 +89,13 @@
 - 结果包含且仅包含六组无序变量对，矩阵对称且对角线为 1。
 - 缺失颜色被映射为 `未知`，输入 DataFrame 保持不变。
 - 人工构造的稀疏列联表被标记为不可靠。
+- 可视化函数在 Matplotlib `Agg` 后端下能够生成预期数量的坐标轴，并保持输入数据不变。
 - 完整测试、Ruff 检查和格式检查通过。
-- 使用 `nbconvert --execute` 从头执行数据勘察 Notebook，确认无异常并生成全部表格与图形。
+- 使用 `nbconvert --execute` 从头执行问题一专用 Notebook，确认无异常并生成全部表格与图形。
 
 ## 验收标准
 
-- Notebook 能在 `uv sync` 后从项目根目录完整运行。
+- 专用 Notebook 能在 `uv sync` 后从项目根目录完整运行，且不包含任何函数定义。
 - 六组两两关联均有数值结果，没有使用 Pearson 相关系数处理分类编码。
 - 颜色缺失样本以 `未知` 显示，分析样本数保持 58。
 - 热力图和三张风化比例图标签可读，并明确区分关联强度与显著性。
