@@ -51,6 +51,7 @@ uv run jupyter lab
 
 - `notebooks/00_data_inspection.ipynb`：查看表结构、缺失值和成分总和有效性；
 - `notebooks/01_model_simulation.ipynb`：等待数学模型后使用的实验骨架。
+- `notebooks/10_question1_weathering.ipynb`：问题一分类变量的 Cramér's V、卡方诊断和风化比例图。
 
 ## 质量检查
 
