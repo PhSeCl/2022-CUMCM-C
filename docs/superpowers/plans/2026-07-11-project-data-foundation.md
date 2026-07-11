@@ -4,7 +4,7 @@
 
 **Goal:** 建立由 uv 管理、同时支持 Python 脚本和 Notebook 的可复现数据项目，并将三张 Excel 工作表确定性转换为可校验的 CSV。
 
-**Architecture:** 原始材料只读保存在 `data/raw`，`cumcm2022c.data` 包负责转换、统一读取和业务校验，`scripts/prepare_data.py` 提供命令行入口。Notebook 只调用包接口进行探索或仿真实验，后续数学模型进入独立的 `simulation` 包。
+**Architecture:** 二进制原件只用于一次性转换；题面 UTF-8 文本、三张 CSV 与转换清单保存在 `data/raw` 并纳入版本控制。`cumcm2022c.data` 包负责转换、统一读取和业务校验，Notebook 只调用包接口进行探索或仿真实验，后续数学模型进入独立的 `simulation` 包。
 
 **Tech Stack:** Python 3.11+, uv, pandas, openpyxl, pandera, pytest, ruff, JupyterLab
 
@@ -76,20 +76,18 @@ reports/tables/*
 tmp/
 ```
 
-- [ ] **Step 5: 移动原始材料并验证环境**
+- [ ] **Step 5: 建立目录并验证环境**
 
 Run: `mkdir -p data/raw data/interim data/processed reports/figures reports/tables notebooks scripts tests/data tests/fixtures`
 
-Run: `mv C题.pdf 附件.xlsx data/raw/`
-
 Run: `uv sync`
 
-Expected: 原始材料位于 `data/raw`，环境同步成功。
+Expected: 环境同步成功；二进制原件暂留仓库根目录，直到 Task 4 完成转换校验。
 
 - [ ] **Step 6: 提交基础骨架**
 
 ```bash
-git add pyproject.toml uv.lock .python-version .gitignore src data/raw data/processed reports
+git add pyproject.toml uv.lock .python-version .gitignore src data/processed reports
 git commit -m "build(repo): initialize uv project structure"
 ```
 
@@ -255,7 +253,11 @@ git commit -m "feat(data): add table loading and composition validation"
 **Files:**
 - Create: `tests/test_prepare_data.py`
 - Create: `scripts/prepare_data.py`
-- Create: `data/interim/.gitkeep`
+- Create: `data/raw/problem.txt`
+- Create: `data/raw/form_1.csv`
+- Create: `data/raw/form_2.csv`
+- Create: `data/raw/form_3.csv`
+- Create: `data/raw/manifest.json`
 
 - [ ] **Step 1: 写 CLI 失败测试**
 
@@ -280,7 +282,7 @@ Expected: FAIL，因为脚本不存在。
 
 - [ ] **Step 3: 实现 argparse 入口并确认绿灯**
 
-脚本默认读取 `data/raw/附件.xlsx`、输出至 `data/interim`，并打印每张表的输出文件、行列数与哈希。
+脚本要求显式指定 `--source` 和 `--output`，并打印每张表的输出文件、行列数与哈希。
 
 Run: `uv run pytest tests/test_prepare_data.py -v`
 
@@ -288,18 +290,18 @@ Expected: PASS。
 
 - [ ] **Step 4: 转换真实附件并核对稳定性**
 
-Run: `uv run python scripts/prepare_data.py`
+Run: `uv run python scripts/prepare_data.py --source 附件.xlsx --output data/raw`
 
-Run: `sha256sum data/interim/form_*.csv data/interim/manifest.json`
+Run: `sha256sum data/raw/form_*.csv data/raw/manifest.json`
 
-重复运行同一命令和 `sha256sum`。
+重复运行同一命令和 `sha256sum`。使用 `pdftotext -layout C题.pdf data/raw/problem.txt` 生成 UTF-8 题面文本，确认文本包含“问题 1”至“问题 4”。确认 CSV 可由 pandas 读取、题面文本可由 UTF-8 解码后，删除根目录的 `附件.xlsx`、`C题.pdf`。
 
 Expected: 两次列出的四个哈希完全一致；清单记录表单 1、2、3。
 
 - [ ] **Step 5: 提交 CLI**
 
 ```bash
-git add scripts/prepare_data.py tests/test_prepare_data.py data/interim/.gitkeep
+git add scripts/prepare_data.py tests/test_prepare_data.py data/raw
 git commit -m "feat(data): add preparation command"
 ```
 

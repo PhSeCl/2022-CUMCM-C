@@ -8,7 +8,7 @@
 
 ## 设计原则
 
-- 原始材料不可变：PDF 和 XLSX 只作为输入，不由程序覆盖。
+- 源数据机器可读：PDF 转为 UTF-8 文本，XLSX 拆分为 UTF-8 CSV；验证成功后不在仓库保留二进制原件。
 - 计算逻辑模块化：数据处理和后续仿真必须位于 Python 包中，Notebook 不承载唯一实现。
 - 结果可复现：同一份原始工作簿重复转换应产生内容一致的 CSV。
 - 数据语义保真：Excel 空白单元格保持缺失，不自动解释为数值 0。
@@ -32,8 +32,8 @@
 ```text
 2022-CUMCM-C/
 ├── data/
-│   ├── raw/                 # C题.pdf、附件.xlsx
-│   ├── interim/             # 每张工作表无损拆分出的 CSV
+│   ├── raw/                 # problem.txt、form_1.csv 至 form_3.csv、manifest.json
+│   ├── interim/             # 后续转换过程中的临时数据
 │   └── processed/           # 后续清洗和模型输入
 ├── notebooks/
 │   ├── 00_data_inspection.ipynb
@@ -59,17 +59,17 @@
 └── .gitignore
 ```
 
-空目录使用 `.gitkeep` 保留。生成的中间数据、处理后数据和报告产物不进入 Git；原始题目材料进入 Git，以固定本次竞赛复现所使用的数据版本。
+空目录使用 `.gitkeep` 保留。生成的中间数据、处理后数据和报告产物不进入 Git。由二进制原件转换并验证过的 UTF-8 文本、CSV 与清单进入 Git，以固定本次复现使用的数据版本；PDF 与 XLSX 不进入最终仓库。
 
 ## 数据转换
 
 `scripts/prepare_data.py` 是用户入口，内部调用 `cumcm2022c.data.convert`：
 
-1. 读取 `data/raw/附件.xlsx`。
+1. 从命令行指定的 XLSX 路径读取附件。
 2. 校验工作簿包含且仅处理 `表单1`、`表单2`、`表单3`。
 3. 将各工作表分别写为 UTF-8 with BOM CSV，确保 Excel 与常用中文数据工具可直接打开。
 4. 保留原始列名、行顺序、列顺序和空白单元格语义。
-5. 写出 `data/interim/manifest.json`，记录源文件 SHA-256、各表名称、行列数、CSV 文件名和 CSV SHA-256。
+5. 写出目标目录中的 `manifest.json`，记录源文件 SHA-256、各表名称、行列数、CSV 文件名和 CSV SHA-256。
 
 输出文件使用稳定的 ASCII 名称：
 
@@ -89,7 +89,7 @@
 - 对未知表名给出包含允许值的错误；
 - 保留缺失值，避免静默填充。
 
-Notebook 和后续仿真模块只通过该入口消费中间数据。
+Notebook 和后续仿真模块只通过该入口消费 `data/raw` 中已验证的机器可读数据。
 
 ## 基础校验
 
@@ -127,7 +127,8 @@ Notebook 和后续仿真模块只通过该入口消费中间数据。
 
 - 仓库使用 `main` 分支并具有符合 Conventional Commits 的提交历史。
 - `uv sync` 可建立完整环境。
-- `uv run python scripts/prepare_data.py` 可从原始 XLSX 生成三个 CSV 和清单。
+- `uv run python scripts/prepare_data.py --source <xlsx> --output <目录>` 可从外部 XLSX 生成三个 CSV 和清单。
+- `data/raw/problem.txt`、三个 CSV 和清单均为 UTF-8 可解析格式，且仓库不含 PDF/XLSX。
 - 连续运行两次后，所有生成文件的内容哈希保持一致。
 - `uv run pytest` 全部通过。
 - `uv run ruff check .` 与 `uv run ruff format --check .` 通过。
